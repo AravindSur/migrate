@@ -32,9 +32,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install python3-pip
-        pip3 install setuptools
-        pip3 install deprecated
+        sudo apt install -y python3-pip
+        pip3 install setuptools deprecated
         python3 setup.py install
 
     - name: Download from S3
@@ -44,27 +43,16 @@ jobs:
         AWS_REGION: ${{ secrets.AWS_REGION }}
       run: |
         pip3 install boto3
-        python3 -c "
-import os
-import boto3
+        python3 -c "import os; import boto3; \
+        os.environ['AWS_ACCESS_KEY_ID'] = '${{ secrets.AWS_ACCESS_KEY_ID }}'; \
+        os.environ['AWS_SECRET_ACCESS_KEY'] = '${{ secrets.AWS_SECRET_ACCESS_KEY }}'; \
+        os.environ['AWS_REGION'] = '${{ secrets.AWS_REGION }}'; \
+        s3 = boto3.client('s3', region_name=os.environ['AWS_REGION']); \
+        bucket_name = 'existing-source-bucket-1'; \
+        s3_key = 'backups_123.zip'; \
+        local_file_name = '/backups_123.zip'; \
+        s3.download_file(bucket_name, s3_key, local_file_name)"
 
-# Set environment variables (provided by GitHub Secrets)
-os.environ['AWS_ACCESS_KEY_ID'] = '${{ secrets.AWS_ACCESS_KEY_ID }}'
-os.environ['AWS_SECRET_ACCESS_KEY'] = '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-os.environ['AWS_REGION'] = '${{ secrets.AWS_REGION }}'
-
-# Initialize a session using the environment variables
-s3 = boto3.client('s3', region_name=os.environ['AWS_REGION'])
-
-# Specify the S3 bucket and file details
-bucket_name = 'existing-source-bucket-1'
-s3_key = 'backups_123.zip'
-local_file_name = '/backups_123.zip'
-
-# Download the file from S3
-s3.download_file(bucket_name, s3_key, local_file_name)
-"
-    
     - name: Run Databricks Migration Pipeline
       run: |
         SRC_PROFILE=KELLANOVA_WORKSPACE_DESTINATION_NEW
