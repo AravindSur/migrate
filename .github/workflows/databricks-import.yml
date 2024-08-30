@@ -68,4 +68,4 @@ s3.download_file(bucket_name, s3_key, local_file_name)
     - name: Run Databricks Migration Pipeline
       run: |
         SRC_PROFILE=KELLANOVA_WORKSPACE_DESTINATION_NEW
-        python3 migration_pipeline.py --profile $SRC_PROFILE --import-pipeline --use-checkpoint --session sample --set-export-dir /tmp
+        python3 migration_pipeline.py --profile $SRC_PROFILE --import-pipeline --use-checkpoint --session sample
