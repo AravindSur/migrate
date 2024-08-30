@@ -49,10 +49,8 @@ jobs:
         os.environ['AWS_REGION'] = '${{ secrets.AWS_REGION }}'; 
         s3 = boto3.client('s3', region_name=os.environ['AWS_REGION']); 
         bucket_name = 'existing-source-bucket-1'; 
-        s3_key = 'backups_123.zip'; 
-        local_file_name = '/backups_123.zip'; 
-        s3.download_file(bucket_name, s3_key, local_file_name)"
-        echo "file path = s3://bucketname/local_file_name"
+        s3_key = 'backups_123.zip';  
+        s3.download_file(bucket_name, s3_key)"
 
     - name: Run Databricks Migration Pipeline
       run: |
