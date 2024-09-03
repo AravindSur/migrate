@@ -1,4 +1,4 @@
-name: Databricks import Migration Pipeline
+name: Databricks Migration Pipeline
 
 on:
   push:
