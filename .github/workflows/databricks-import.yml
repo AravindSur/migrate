@@ -1,4 +1,4 @@
-name: Databricks import Migration Pipeline
+name: Databricks Import Migration Pipeline
 
 on:
   push:
@@ -35,6 +35,17 @@ jobs:
         sudo apt install -y python3-pip
         pip3 install setuptools deprecated
         python3 setup.py install
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2  # Change to your region
+
+    - name: Download file from S3
+      run: |
+        aws s3 cp s3://existing-source-bucket-1/backups_123.zip backups_123.zip
 
     - name: Unzip backups folder
       run: |
