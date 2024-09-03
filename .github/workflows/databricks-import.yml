@@ -1,4 +1,4 @@
-name: Databricks Migration Pipeline
+name: Databricks import Migration Pipeline
 
 on:
   push:
@@ -36,17 +36,15 @@ jobs:
         pip3 install setuptools deprecated
         python3 setup.py install
 
-    - name: Download from S3
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
+    - name: Unzip backups folder
       run: |
-        bucket_name = 'existing-source-bucket-1'; 
-        s3_key = 'backups_123.zip';  
-        file_name = '/backups_123.zip';
-        s3.download_file(bucket_name, s3_key,file_name)"
+        unzip -j backups_123.zip -d ../backups/
 
+    - name: Move source_info.txt to logs/sample/
+      run: |
+        mkdir -p logs/sample/
+        mv ../backups/source_info.txt logs/sample/
+        
     - name: Run Databricks Migration Pipeline
       run: |
         SRC_PROFILE=KELLANOVA_WORKSPACE_DESTINATION_NEW
