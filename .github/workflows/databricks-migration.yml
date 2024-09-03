@@ -3,7 +3,7 @@ name: Databricks Migration Pipeline
 on:
   push:
     branches:
-      - dr-import
+      - master
   workflow_dispatch:
 
 jobs:
