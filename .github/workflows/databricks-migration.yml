@@ -1,5 +1,4 @@
 name: Databricks Migration Pipeline
-
 on:
   push:
     branches:
@@ -25,38 +24,44 @@ jobs:
         echo "host = https://dbc-f074b72b-99f1.cloud.databricks.com" >> ~/.databrickscfg
         echo "token = ${{ secrets.DATABRICKS_TOKEN_SOURCE }}" >> ~/.databrickscfg
         echo "[KELLANOVA_WORKSPACE_DESTINATION_NEW]" >> ~/.databrickscfg
-        echo "host = https://dbc-280cb907-6a02.cloud.databricks.com/" >> ~/.databrickscfg
+        echo "host = https://dbc-f134d9ff-93fa.cloud.databricks.com" >> ~/.databrickscfg
         echo "token = ${{ secrets.DATABRICKS_TOKEN_DESTINATION }}" >> ~/.databrickscfg
         cat ~/.databrickscfg
 
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y python3-pip
-        pip3 install setuptools deprecated
+        sudo apt install python3-pip
+        pip3 install setuptools
+        pip3 install deprecated
         python3 setup.py install
 
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-west-2  # Change to your region
-
-    - name: Download file from S3
-      run: |
-        aws s3 cp s3://existing-source-bucket-1/backups_123.zip backups_123.zip
-
-    - name: Unzip backups folder
-      run: |
-        unzip -j backups_123.zip -d ../backups/
-
-    - name: Move source_info.txt to logs/sample/
-      run: |
-        mkdir -p logs/sample/
-        mv ../backups/source_info.txt logs/sample/
-        
     - name: Run Databricks Migration Pipeline
       run: |
-        SRC_PROFILE=KELLANOVA_WORKSPACE_DESTINATION_NEW
-        python3 migration_pipeline.py --profile $SRC_PROFILE --import-pipeline --use-checkpoint --session sample
+        SRC_PROFILE=KELLANOVA_WORKSPACE_SOURCE_NEW
+        python3 migration_pipeline.py --profile $SRC_PROFILE --export-pipeline --use-checkpoint --session sample --set-export-dir ../backups/
+        
+
+    - name: Zip the backups folder
+      run: |
+        zip -r backups_123.zip ../backups
+
+    - name: Validate zip file
+      id: validate_zip
+      run: |
+        if unzip -t backups_123.zip; then
+          echo "Valid zip file"
+          echo "zip_valid=true" >> $GITHUB_ENV
+        else
+          echo "Invalid zip file, skipping upload."
+          echo "zip_valid=false" >> $GITHUB_ENV
+        fi
+        
+
+    - name: Upload to S3
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
+      run: |
+        aws s3 cp backups_123.zip s3://existing-source-bucket-1/
